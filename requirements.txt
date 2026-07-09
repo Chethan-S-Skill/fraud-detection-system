@@ -1,0 +1,11 @@
+numpy>=1.22.0
+pandas>=1.4.0
+scikit-learn>=1.0.0
+xgboost>=1.5.0
+optuna>=2.10.0
+shap>=0.40.0
+fastapi>=0.75.0
+uvicorn>=0.17.0
+prometheus-client>=0.13.0
+joblib>=1.1.0
+matplotlib>=3.5.0

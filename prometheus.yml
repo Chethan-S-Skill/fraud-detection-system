@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 10s       # Scrape metrics frequently for responsive real-time dashboard updates
+  evaluation_interval: 10s
+
+# Alerting configurations (optional for enterprise scale)
+rule_files:
+  # - "alert.rules"
+
+scrape_configs:
+  # Scrape FastAPI application metrics
+  - job_name: "shieldai-service"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["host.docker.internal:8000"] # Allows docker-based Prometheus to scrape local host

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ShieldAI - Enterprise Real-Time Fraud Detection & MLOps Analytics Suite. Monitor transactions, deploy ML models, tweak rule engines, and view SHAP explanations.">
+    <title>ShieldAI // Enterprise Fraud Prevention Suite</title>
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono for code elements -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for high-fidelity dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for iconography -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="logo-text">SHIELD<span>AI</span></div>
+            </div>
+            
+            <div class="connection-status offline" id="apiStatusBadge">
+                <span class="status-indicator"></span>
+                <span id="apiStatusText">CONNECTING TO API...</span>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="dashboard" id="btnTabDashboard">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Real-Time SOC</span>
+                </button>
+                <button class="nav-item" data-tab="rules" id="btnTabRules">
+                    <i class="fa-solid fa-gears"></i>
+                    <span>Rule Engine</span>
+                </button>
+                <button class="nav-item" data-tab="model" id="btnTabModel">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Model Analytics</span>
+                </button>
+                <button class="nav-item" data-tab="monitoring" id="btnTabMonitoring">
+                    <i class="fa-solid fa-server"></i>
+                    <span>MLOps Monitoring</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <div class="profile-info">
+                        <span class="name">MLOps Operator</span>
+                        <span class="role">Admin Console</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-title">
+                    <h1 id="pageTitle">Real-Time Security Operations Center</h1>
+                    <p class="subtitle" id="pageSubtitle">Monitoring and analyzing card transactions for active fraud signatures.</p>
+                </div>
+                <div class="header-actions">
+                    <div class="simulation-controls">
+                        <span class="ctrl-label">Feed Control:</span>
+                        <button class="btn-ctrl btn-play" id="btnPausePlayFeed" title="Pause/Play Live Feed">
+                            <i class="fa-solid fa-pause"></i>
+                        </button>
+                        <button class="btn-ctrl" id="btnSpeedUp" title="Increase Feed Speed">
+                            <i class="fa-solid fa-forward"></i>
+                        </button>
+                        <select class="select-speed" id="selectFeedSpeed" title="Select speed interval">
+                            <option value="2000">Slow (2s)</option>
+                            <option value="1000" selected>Normal (1s)</option>
+                            <option value="400">Fast (0.4s)</option>
+                            <option value="150">Ultra (0.15s)</option>
+                        </select>
+                    </div>
+                    <div class="time-display" id="timeDisplay">2026-07-09 10:00:00</div>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <section class="tab-content active" id="tabDashboard">
+                <!-- KPI cards -->
+                <div class="metrics-grid">
+                    <div class="kpi-card" id="kpiProcessed">
+                        <div class="kpi-icon"><i class="fa-solid fa-calculator"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-title">Transactions Processed</span>
+                            <h2 class="kpi-value" id="valProcessed">0</h2>
+                            <span class="kpi-subtext"><span class="trend-up" id="valRatePerSec">0.0</span> tx/sec</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card" id="kpiFraudRate">
+                        <div class="kpi-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-title">Avg Fraud Rate</span>
+                            <h2 class="kpi-value danger" id="valFraudRate">0.00%</h2>
+                            <span class="kpi-subtext" id="valFraudRatio">0 / 0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card" id="kpiBlocked">
+                        <div class="kpi-icon warning"><i class="fa-solid fa-ban"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-title">Total Blocked / Saved</span>
+                            <h2 class="kpi-value warning" id="valBlockedValue">$0.00</h2>
+                            <span class="kpi-subtext" id="valBlockedCount">0 transactions</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card" id="kpiAvgRisk">
+                        <div class="kpi-icon info"><i class="fa-solid fa-gauge-high"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-title">Avg Risk Score</span>
+                            <h2 class="kpi-value info" id="valAvgRisk">0.0%</h2>
+                            <span class="kpi-subtext">Decision Threshold: <span id="lblThresholdVal">50%</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-row">
+                    <div class="chart-card large">
+                        <div class="card-header">
+                            <h3>Transaction Volume & Risk Trend</h3>
+                            <span class="legend-badge"><span class="dot purple"></span>Volume</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="volumeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card small">
+                        <div class="card-header">
+                            <h3>Fraud by Merchant</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Live Feed Table -->
+                <div class="table-card">
+                    <div class="card-header">
+                        <h3>Live Transaction Ledger</h3>
+                        <div class="feed-filters">
+                            <button class="filter-chip active" data-filter="all" id="filterAll">All</button>
+                            <button class="filter-chip" data-filter="approved" id="filterApproved">Approved</button>
+                            <button class="filter-chip" data-filter="flagged" id="filterFlagged">Flagged</button>
+                            <button class="filter-chip" data-filter="blocked" id="filterBlocked">Blocked</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="ledger-table" id="ledgerTable">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Merchant Category</th>
+                                    <th>Location (Dist)</th>
+                                    <th>Risk Score</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerBody">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rule Engine Tab -->
+            <section class="tab-content" id="tabRules">
+                <div class="rules-grid">
+                    <!-- Rule Maker Form -->
+                    <div class="panel-card rule-form-panel">
+                        <div class="card-header">
+                            <h3>Deploy Fraud Rule</h3>
+                        </div>
+                        <form class="rule-form" id="ruleForm">
+                            <div class="form-group">
+                                <label for="ruleName">Rule Identifier</label>
+                                <input type="text" id="ruleName" placeholder="e.g. HIGH_VELOCITY_NIGHT" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ruleConditionField">Primary Attribute</label>
+                                <select id="ruleConditionField">
+                                    <option value="amount">Transaction Amount ($)</option>
+                                    <option value="distance_from_home">Distance from Home (km)</option>
+                                    <option value="txn_count_1h">Txn Count in last 1 Hour</option>
+                                    <option value="spend_sum_1h">Cumulative Spend last 1 Hour</option>
+                                    <option value="is_new_device">Device ID Mismatched (0 or 1)</option>
+                                    <option value="card_present">Card Physical Presence (0 or 1)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label for="ruleOperator">Condition</label>
+                                    <select id="ruleOperator">
+                                        <option value=">">&gt; (Greater than)</option>
+                                        <option value="<">&lt; (Less than)</option>
+                                        <option value="==">= (Equals)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label for="ruleValue">Threshold Value</label>
+                                    <input type="number" id="ruleValue" step="any" placeholder="e.g. 500" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ruleOutcome">Trigger Action</label>
+                                <select id="ruleOutcome">
+                                    <option value="Block">Block Transaction (Risk Score -> 99%)</option>
+                                    <option value="Flag">Flag for Review (Risk Score -> 75%)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary" id="btnSubmitRule">Deploy Rule to Stream</button>
+                        </form>
+                    </div>
+
+                    <!-- Active Rules List -->
+                    <div class="panel-card rule-list-panel">
+                        <div class="card-header">
+                            <h3>Deployed Active Policies</h3>
+                        </div>
+                        <div class="rules-list" id="rulesListContainer">
+                            <!-- Dynamic Rules -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Model Analytics Tab -->
+            <section class="tab-content" id="tabModel">
+                <div class="model-analytics-grid">
+                    <!-- Hyperparameter & Tuning panel -->
+                    <div class="panel-card model-tuning-panel">
+                        <div class="card-header">
+                            <h3>Classification Threshold Control</h3>
+                        </div>
+                        <div class="tuning-container">
+                            <p class="panel-desc">Adjust decision thresholds in real-time. Altering values updates the confusion matrix and operational recall parameters instantly.</p>
+                            
+                            <div class="slider-wrapper">
+                                <div class="slider-header">
+                                    <span>Model Threshold Score</span>
+                                    <span class="slider-value" id="valThresholdSliderDisplay">0.50</span>
+                                </div>
+                                <input type="range" min="0.0" max="1.0" step="0.01" value="0.50" class="tuning-slider" id="inputThresholdSlider">
+                                <div class="slider-labels">
+                                    <span>High Recall (Sensitive)</span>
+                                    <span>High Precision (Conservative)</span>
+                                </div>
+                            </div>
+
+                            <div class="model-stats-row">
+                                <div class="stat-box">
+                                    <span class="box-lbl">ROC-AUC</span>
+                                    <h4 class="box-val" id="valModelRocAuc">0.984</h4>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="box-lbl">PR-AUC</span>
+                                    <h4 class="box-val" id="valModelPrAuc">0.921</h4>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="box-lbl">F1 Score</span>
+                                    <h4 class="box-val" id="valModelF1">0.908</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confusion Matrix panel -->
+                    <div class="panel-card confusion-matrix-panel">
+                        <div class="card-header">
+                            <h3>Operational Confusion Matrix</h3>
+                        </div>
+                        <div class="matrix-container">
+                            <div class="matrix-grid">
+                                <div></div>
+                                <div class="grid-header-lbl">Actual Legit</div>
+                                <div class="grid-header-lbl">Actual Fraud</div>
+                                
+                                <div class="grid-side-lbl">Predicted Legit</div>
+                                <div class="matrix-cell tn" id="cellTN">
+                                    <span class="cell-val">9,872</span>
+                                    <span class="cell-lbl">True Negative</span>
+                                </div>
+                                <div class="matrix-cell fn" id="cellFN">
+                                    <span class="cell-val">12</span>
+                                    <span class="cell-lbl">False Negative</span>
+                                </div>
+                                
+                                <div class="grid-side-lbl">Predicted Fraud</div>
+                                <div class="matrix-cell fp" id="cellFP">
+                                    <span class="cell-val">18</span>
+                                    <span class="cell-lbl">False Positive</span>
+                                </div>
+                                <div class="matrix-cell tp" id="cellTP">
+                                    <span class="cell-val">98</span>
+                                    <span class="cell-lbl">True Positive</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Importance chart -->
+                    <div class="panel-card feature-importance-panel">
+                        <div class="card-header">
+                            <h3>Global Feature Importance (SHAP Weights)</h3>
+                        </div>
+                        <div class="chart-container large-y">
+                            <canvas id="importanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MLOps Monitoring Tab -->
+            <section class="tab-content" id="tabMonitoring">
+                <div class="monitoring-layout">
+                    <div class="panel-card monitoring-header-card">
+                        <div class="card-header">
+                            <h3>Prometheus & Grafana MLOps Bridge</h3>
+                        </div>
+                        <p class="panel-desc">Metrics are exported actively on <code>/metrics</code> for integration with scrapers. Below is a simulated view of metrics harvested by Prometheus.</p>
+                    </div>
+
+                    <div class="monitoring-grid">
+                        <div class="monitor-card">
+                            <div class="m-card-header">
+                                <span class="m-card-title">Prometheus Scraper Latency</span>
+                                <i class="fa-solid fa-gauge"></i>
+                            </div>
+                            <div class="m-value-row">
+                                <h3 id="valLatencyMonitor">12.4 ms</h3>
+                                <span class="m-sub">Target: &lt;50ms</span>
+                            </div>
+                            <div class="m-sparkline-container">
+                                <canvas id="latencySparkline"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="monitor-card">
+                            <div class="m-card-header">
+                                <span class="m-card-title">Statistical Data Drift index (PSI)</span>
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <div class="m-value-row">
+                                <h3 id="valDriftMonitor" class="success-text">0.042</h3>
+                                <span class="m-sub">Status: Stable</span>
+                            </div>
+                            <div class="m-sparkline-container">
+                                <canvas id="driftSparkline"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="monitor-card">
+                            <div class="m-card-header">
+                                <span class="m-card-title">Memory Allocation (API Container)</span>
+                                <i class="fa-solid fa-memory"></i>
+                            </div>
+                            <div class="m-value-row">
+                                <h3 id="valMemoryMonitor">184.2 MB</h3>
+                                <span class="m-sub">Quota: 1024MB</span>
+                            </div>
+                            <div class="m-sparkline-container">
+                                <canvas id="memorySparkline"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-card scraping-code-card">
+                        <div class="card-header">
+                            <h3>Exposed Prometheus Scrape Configuration</h3>
+                        </div>
+                        <div class="code-block-wrapper">
+                            <pre><code class="language-yaml">scrape_configs:
+  - job_name: "shieldai-service"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["localhost:8000"]
+    scrape_interval: 10s</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Forensic Deep Investigation Modal -->
+    <div class="modal-overlay" id="forensicModal">
+        <div class="modal-container">
+            <header class="modal-header">
+                <div class="modal-title-area">
+                    <div class="modal-badge status-blocked" id="modalRiskBadge">HIGH RISK</div>
+                    <h2>Forensic Risk Ledger // <span id="modalTxnId">TXN_4569871</span></h2>
+                </div>
+                <button class="btn-close-modal" id="btnCloseModal"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+            
+            <div class="modal-body">
+                <div class="modal-details-grid">
+                    <!-- Left Column: Core Data -->
+                    <div class="modal-data-pane">
+                        <h3 class="pane-title">Transaction Information</h3>
+                        <div class="detail-list">
+                            <div class="detail-item">
+                                <span class="dl-lbl">User Profile ID</span>
+                                <span class="dl-val font-mono" id="valModalUserId">USR_4812</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">timestamp</span>
+                                <span class="dl-val" id="valModalTimestamp">2026-07-09 10:00:12</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Total Amount</span>
+                                <span class="dl-val highlighted" id="valModalAmount">$4,850.00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Merchant Category</span>
+                                <span class="dl-val" id="valModalCategory">Transfer</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">User Location Coordinates</span>
+                                <span class="dl-val font-mono" id="valModalCoordinates">37.7749, -122.4194</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Distance from User Home</span>
+                                <span class="dl-val" id="valModalDistance">845.2 km</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Terminal Device Profile</span>
+                                <span class="dl-val font-mono" id="valModalDevice">DEV_2910</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Physical Card Present</span>
+                                <span class="dl-val" id="valModalCardPresent">No</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Real-time Feature Store & Engine -->
+                    <div class="modal-data-pane">
+                        <h3 class="pane-title">Real-Time Feature Store Calculations</h3>
+                        <div class="detail-list">
+                            <div class="detail-item">
+                                <span class="dl-lbl">Transaction count (Last 1 hour)</span>
+                                <span class="dl-val" id="valModalCount1h">4</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Transaction count (Last 24 hours)</span>
+                                <span class="dl-val" id="valModalCount24h">12</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Cumulative spend (Last 1 hour)</span>
+                                <span class="dl-val" id="valModalSpend1h">$5,120.00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Cumulative spend (Last 24 hours)</span>
+                                <span class="dl-val" id="valModalSpend24h">$8,250.00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="dl-lbl">Is Brand New Device</span>
+                                <span class="dl-val" id="valModalIsNewDevice">Yes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explainable AI (SHAP Plot Panel) -->
+                <div class="shap-explanation-panel">
+                    <div class="panel-header-inline">
+                        <h3 class="pane-title">SHAP explainability (Local Feature Contributions)</h3>
+                        <div class="model-meta-info">
+                            <span>Base probability: <strong id="valModalBaseProb">1.2%</strong></span>
+                            <span class="separator">|</span>
+                            <span>Model Prediction: <strong id="valModalPredProb">85.4%</strong></span>
+                        </div>
+                    </div>
+                    <p class="panel-desc">SHAP values explain how much each feature pushes the transaction risk score up (red) or down (green) relative to the global dataset baseline.</p>
+                    
+                    <div class="shap-bar-chart" id="shapBarChartContainer">
+                        <!-- Dynamic SHAP force bars will go here -->
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="modal-footer">
+                <div class="modal-risk-conclusion" id="modalConclusionText">
+                    Fraud risk score is high. Model recommends blocking transaction.
+                </div>
+                <div class="modal-action-buttons">
+                    <button class="btn-secondary" id="btnModalClose">Dismiss</button>
+                    <button class="btn-approve" id="btnModalApprove">Approve Override</button>
+                    <button class="btn-block" id="btnModalConfirmBlock">Confirm Block</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Floating AI Copilot Widget -->
+    <button class="copilot-toggle-btn" id="btnToggleCopilot" title="Open AI Security Copilot">
+        <i class="fa-solid fa-robot"></i>
+        <span class="pulse-indicator"></span>
+    </button>
+
+    <!-- Copilot Chat Window -->
+    <div class="copilot-chat-window" id="copilotChatWindow">
+        <div class="copilot-chat-header">
+            <div class="header-bot-info">
+                <i class="fa-solid fa-robot"></i>
+                <div>
+                    <h4>ShieldAI Copilot</h4>
+                    <span class="bot-status">Active Analyst</span>
+                </div>
+            </div>
+            <button class="btn-close-copilot" id="btnCloseCopilot"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="copilot-chat-body" id="copilotChatBody">
+            <div class="message message-bot">
+                Hello, Operator. I am your ShieldAI Security Copilot. Ask me to analyze transactions, deploy rules, or tweak thresholds. Try clicking a quick chip or typing "help" for a list of command patterns.
+            </div>
+        </div>
+        <div class="copilot-quick-chips">
+            <button class="quick-chip" id="chipExplainLatest">Analyze Latest</button>
+            <button class="quick-chip" id="chipGoRules">Rules Panel</button>
+            <button class="quick-chip" id="chipHelp">Commands</button>
+        </div>
+        <form class="copilot-chat-input-area" id="copilotChatForm">
+            <input type="text" id="copilotInputText" placeholder="Ask copilot..." autocomplete="off" required>
+            <button type="submit" class="btn-send-message"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+    </div>
+
+    <!-- Background script file -->
+    <script src="app.js"></script>
+</body>
+</html>
