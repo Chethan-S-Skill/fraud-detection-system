@@ -53,24 +53,23 @@ class FraudFeatureExtractor:
         print("Calculating rolling window stats (1h and 24h)...")
         
         # -------------------------------------------------------------------------
-# 1-hour rolling features
-# -------------------------------------------------------------------------
-        rolling_1h = df_feats.groupby('user_id').rolling('1h', on='timestamp')['amount']
-        roll_1h = rolling_1h.agg(['count', 'sum']).reset_index(level=0, drop=True)
-        roll_1h.rename(columns={'count': 'txn_count_1h', 'sum': 'spend_sum_1h'}, inplace=True)
-
-# -------------------------------------------------------------------------
-# 24-hour rolling features
-# -------------------------------------------------------------------------
-        rolling_24h = df_feats.groupby('user_id').rolling('24h', on='timestamp')['amount']
-        roll_24h = rolling_24h.agg(['count', 'sum']).reset_index(level=0, drop=True)
-        roll_24h.rename(columns={'count': 'txn_count_24h', 'sum': 'spend_sum_24h'}, inplace=True)
-
-# Assign to feature dataframe
+ # 1-hour rolling features (inclusive of current row)
+        roll_1h = df_feats.groupby('user_id').rolling('1h', on='timestamp')['amount'].agg(
+            txn_count_1h='count',
+            spend_sum_1h='sum'
+        ).reset_index(level=0, drop=True)
+        
+        # 24-hour rolling features (inclusive of current row)
+        roll_24h = df_feats.groupby('user_id').rolling('24h', on='timestamp')['amount'].agg(
+            txn_count_24h='count',
+            spend_sum_24h='sum'
+        ).reset_index(level=0, drop=True)
+        
         df_feats['txn_count_1h'] = roll_1h['txn_count_1h']
         df_feats['spend_sum_1h'] = roll_1h['spend_sum_1h']
         df_feats['txn_count_24h'] = roll_24h['txn_count_24h']
         df_feats['spend_sum_24h'] = roll_24h['spend_sum_24h']
+        
         
 
         
